@@ -7,3 +7,6 @@ python-dotenv>=1.0,<1.1
 requests>=2.32,<2.33
 gunicorn>=23.0,<23.1
 whitenoise>=6.7,<6.8
+pandas>=2.2,<2.3
+scikit-learn>=1.5,<1.6
+joblib>=1.4,<1.5

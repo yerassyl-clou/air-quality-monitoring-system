@@ -12,9 +12,17 @@ class RecommendationListView(APIView):
 
     def get(self, request):
         aqi = int(request.query_params.get("aqi", "0"))
+        pm25 = request.query_params.get("pm25")
+        pm10 = request.query_params.get("pm10")
         queryset = Recommendation.objects.all()
         recommendations = RecommendationSerializer(queryset, many=True).data
         if not recommendations:
             recommendations = BASE_MESSAGES
-        personalized = build_personalized_recommendation(aqi, request.user.profile.sensitivity_level)
+        personalized = build_personalized_recommendation(
+            aqi=aqi,
+            pm25=float(pm25) if pm25 not in (None, "") else None,
+            pm10=float(pm10) if pm10 not in (None, "") else None,
+            age_group=request.user.profile.age_group,
+            sensitivity_level=request.user.profile.sensitivity_level,
+        )
         return Response({"rules": recommendations, "personalized": personalized})

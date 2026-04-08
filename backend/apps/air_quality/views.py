@@ -41,7 +41,7 @@ class AirQualityAggregateView(APIView):
 
         try:
             best = get_best_data(latitude=latitude, longitude=longitude)
-        except (RequestException, ValueError, TypeError):
+        except (RequestException, ValueError, TypeError, AttributeError):
             best = {
                 "lat": latitude,
                 "lon": longitude,
@@ -66,7 +66,13 @@ class AirQualityAggregateView(APIView):
             source=best["source"],
             timestamp=timezone.now(),
         )
-        recommendation = build_personalized_recommendation(best["aqi"], request.user.profile.sensitivity_level)
+        recommendation = build_personalized_recommendation(
+            aqi=best["aqi"],
+            pm25=best.get("pm25"),
+            pm10=best.get("pm10"),
+            age_group=request.user.profile.age_group,
+            sensitivity_level=request.user.profile.sensitivity_level,
+        )
         return Response(
             {
                 "air_quality": AirQualityDataSerializer(air_quality).data,
