@@ -5,7 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-secret-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() == "true"
@@ -116,3 +116,7 @@ AIR_KZ_API_URL = os.getenv("AIR_KZ_API_URL", "https://air.org.kz/api")
 AIR_KZ_TOKEN = os.getenv("AIR_KZ_TOKEN", "")
 IQAIR_API_URL = os.getenv("IQAIR_API_URL", "https://api.airvisual.com/v2/nearest_city")
 IQAIR_API_KEY = os.getenv("IQAIR_API_KEY", "")
+HF_TOKEN = os.getenv("HF_TOKEN", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+print("DEBUG GROQ KEY:", bool(GROQ_API_KEY))

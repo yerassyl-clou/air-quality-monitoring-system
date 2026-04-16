@@ -60,6 +60,16 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'dashboard.primarySource': 'Primary Source',
     'dashboard.monitoredCities': 'Monitored cities',
     'dashboard.currentAdvisory': 'Current advisory',
+    'dashboard.generatingRecommendation': 'Generating personalized recommendation...',
+    'dashboard.aiFallback': 'Air quality is not ideal. Please reduce outdoor exposure.',
+    'dashboard.risk.low': 'LOW',
+    'dashboard.risk.moderate': 'MODERATE',
+    'dashboard.risk.high': 'HIGH',
+    'dashboard.risk.veryHigh': 'VERY HIGH',
+    'dashboard.action.low': 'Air quality is safe.',
+    'dashboard.action.moderate': 'Consider reducing prolonged outdoor activity.',
+    'dashboard.action.high': 'Limit outdoor activity.',
+    'dashboard.action.veryHigh': 'Avoid outdoor exposure.',
     'dashboard.lastUpdate': 'Last update',
     'dashboard.pm25Hint': 'Fine particles with highest respiratory risk.',
     'dashboard.pm10Hint': 'Coarse particles and dust exposure trend.',
@@ -77,6 +87,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'map.title': 'Inspect monitored cities and respond to pollution hotspots faster.',
     'map.text': 'Markers are colored by AQI band and include direct recommendation guidance.',
     'map.legend': 'Legend',
+    'map.recommendation': 'Recommendation',
     'map.activeMarkers': 'Active markers',
     'map.noMarkers': 'No monitoring markers available yet.',
     'map.error': 'Unable to load map markers right now.',
@@ -117,7 +128,9 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'value.safe': 'Safe',
     'value.moderate': 'Moderate',
     'value.limitOutdoor': 'Limit outdoor activity',
-    'value.avoidOutdoor': 'Avoid outdoor activity',
+    'value.avoidOutdoor': 'Avoid outdoor exposure',
+    'value.safeConditions': 'Safe conditions',
+    'value.beCautious': 'Be cautious',
     'status.pending': 'Pending',
     'status.resolved': 'Resolved',
     'notification.read': 'Read',
@@ -193,6 +206,16 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'dashboard.primarySource': 'Основной источник',
     'dashboard.monitoredCities': 'Города мониторинга',
     'dashboard.currentAdvisory': 'Текущая рекомендация',
+    'dashboard.generatingRecommendation': 'Формируется персональная рекомендация...',
+    'dashboard.aiFallback': 'Качество воздуха сейчас неблагоприятное. Сократите пребывание на улице.',
+    'dashboard.risk.low': 'НИЗКИЙ',
+    'dashboard.risk.moderate': 'УМЕРЕННЫЙ',
+    'dashboard.risk.high': 'ВЫСОКИЙ',
+    'dashboard.risk.veryHigh': 'ОЧЕНЬ ВЫСОКИЙ',
+    'dashboard.action.low': 'Качество воздуха безопасное.',
+    'dashboard.action.moderate': 'Стоит сократить длительное пребывание на улице.',
+    'dashboard.action.high': 'Ограничьте активность на улице.',
+    'dashboard.action.veryHigh': 'Избегайте пребывания на улице.',
     'dashboard.lastUpdate': 'Последнее обновление',
     'dashboard.pm25Hint': 'Мелкие частицы с наибольшим риском для дыхания.',
     'dashboard.pm10Hint': 'Крупные частицы и тренд пылевой нагрузки.',
@@ -210,6 +233,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'map.title': 'Просматривайте города мониторинга и быстрее реагируйте на очаги загрязнения.',
     'map.text': 'Маркеры окрашены по диапазонам AQI и содержат рекомендации.',
     'map.legend': 'Легенда',
+    'map.recommendation': 'Рекомендация',
     'map.activeMarkers': 'Активные маркеры',
     'map.noMarkers': 'Маркеры мониторинга пока недоступны.',
     'map.error': 'Не удалось загрузить маркеры карты.',
@@ -251,6 +275,8 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'value.moderate': 'Умеренно',
     'value.limitOutdoor': 'Ограничьте активность на улице',
     'value.avoidOutdoor': 'Избегайте пребывания на улице',
+    'value.safeConditions': 'Безопасные условия',
+    'value.beCautious': 'Будьте осторожны',
     'status.pending': 'В ожидании',
     'status.resolved': 'Решено',
     'notification.read': 'Прочитано',
@@ -326,6 +352,16 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'dashboard.primarySource': 'Негізгі дереккөз',
     'dashboard.monitoredCities': 'Бақыланатын қалалар',
     'dashboard.currentAdvisory': 'Ағымдағы кеңес',
+    'dashboard.generatingRecommendation': 'Жеке ұсыныс дайындалып жатыр...',
+    'dashboard.aiFallback': 'Ауа сапасы қазір қолайсыз. Сыртта болу уақытын азайтыңыз.',
+    'dashboard.risk.low': 'ТӨМЕН',
+    'dashboard.risk.moderate': 'ОРТАША',
+    'dashboard.risk.high': 'ЖОҒАРЫ',
+    'dashboard.risk.veryHigh': 'ӨТЕ ЖОҒАРЫ',
+    'dashboard.action.low': 'Ауа сапасы қауіпсіз.',
+    'dashboard.action.moderate': 'Сыртта ұзақ болуды азайтқан дұрыс.',
+    'dashboard.action.high': 'Сырттағы белсенділікті шектеңіз.',
+    'dashboard.action.veryHigh': 'Сыртқа шығудан аулақ болыңыз.',
     'dashboard.lastUpdate': 'Соңғы жаңарту',
     'dashboard.pm25Hint': 'Тыныс алу жүйесіне ең қауіпті ұсақ бөлшектер.',
     'dashboard.pm10Hint': 'Ірі бөлшектер мен шаң деңгейінің үрдісі.',
@@ -343,6 +379,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'map.title': 'Бақыланатын қалаларды қарап, ластану ошақтарына жылдам әрекет етіңіз.',
     'map.text': 'Маркерлер AQI диапазондарына қарай боялған және ұсыныстарды көрсетеді.',
     'map.legend': 'Түсіндірме',
+    'map.recommendation': 'Ұсыныс',
     'map.activeMarkers': 'Белсенді маркерлер',
     'map.noMarkers': 'Бақылау маркерлері әзірге жоқ.',
     'map.error': 'Карта маркерлерін жүктеу мүмкін болмады.',
@@ -384,6 +421,8 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'value.moderate': 'Орташа',
     'value.limitOutdoor': 'Сырттағы белсенділікті шектеңіз',
     'value.avoidOutdoor': 'Сыртқа шығудан аулақ болыңыз',
+    'value.safeConditions': 'Қауіпсіз жағдай',
+    'value.beCautious': 'Сақ болыңыз',
     'status.pending': 'Күтуде',
     'status.resolved': 'Шешілді',
     'notification.read': 'Оқылды',
@@ -433,6 +472,13 @@ export class TranslationService {
       .replace('Moderate', this.instant('value.moderate'))
       .replace('Limit outdoor activity', this.instant('value.limitOutdoor'))
       .replace('Avoid outdoor activity', this.instant('value.avoidOutdoor'))
+      .replace('Avoid outdoor exposure', this.instant('value.avoidOutdoor'))
+      .replace('Safe conditions', this.instant('value.safeConditions'))
+      .replace('Be cautious', this.instant('value.beCautious'))
+      .replace('Consider reducing prolonged outdoor activity.', this.instant('dashboard.action.moderate'))
+      .replace('Air quality is safe.', this.instant('dashboard.action.low'))
+      .replace('Limit outdoor activity.', this.instant('dashboard.action.high'))
+      .replace('Avoid outdoor exposure.', this.instant('dashboard.action.veryHigh'))
       .replace('Maintain regular precautions.', '')
       .replace('Use a mask, keep medication nearby, and avoid exertion.', '')
       .replace('Reduce workout intensity and prefer indoor exercise.', '')

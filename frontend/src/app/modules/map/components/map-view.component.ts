@@ -25,10 +25,10 @@ import { TranslationService } from '../../../shared/services/translation.service
         <aside class="card">
           <h2>{{ 'map.legend' | t }}</h2>
           <div class="legend">
-            <div class="legend-item"><span class="legend-swatch" style="background:#2a9d8f"></span><span>{{ 'legend.safe' | t }}</span></div>
-            <div class="legend-item"><span class="legend-swatch" style="background:#e9c46a"></span><span>{{ 'legend.moderate' | t }}</span></div>
-            <div class="legend-item"><span class="legend-swatch" style="background:#f4a261"></span><span>{{ 'legend.limitOutdoor' | t }}</span></div>
-            <div class="legend-item"><span class="legend-swatch" style="background:#e76f51"></span><span>{{ 'legend.avoidOutdoor' | t }}</span></div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#1f9d55"></span><span>{{ 'legend.safe' | t }}</span></div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#d4a017"></span><span>{{ 'legend.moderate' | t }}</span></div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#f97316"></span><span>{{ 'legend.limitOutdoor' | t }}</span></div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#dc2626"></span><span>{{ 'legend.avoidOutdoor' | t }}</span></div>
           </div>
 
           <div class="stack" style="margin-top: 22px;">
@@ -37,7 +37,7 @@ import { TranslationService } from '../../../shared/services/translation.service
               <div class="list-item" *ngFor="let record of records">
                 <div class="row">
                   <strong>{{ record.location?.city ?? ('dashboard.unknownCity' | t) }}</strong>
-                  <span class="pill">AQI {{ record.aqi }}</span>
+                  <span class="pill" [ngClass]="aqiBadgeClass(record.aqi)">AQI {{ record.aqi }}</span>
                 </div>
                 <p class="soft">{{ record.location?.name ?? ('dashboard.monitoringPoint' | t) }}</p>
               </div>
@@ -98,16 +98,16 @@ export class MapViewComponent implements AfterViewInit {
       <strong>${record.location?.city ?? this.i18n.instant('dashboard.monitoringPoint')}</strong><br>
       ${record.location?.name ?? this.i18n.instant('dashboard.monitoringPoint')}<br>
       AQI: ${record.aqi}<br>
-      Recommendation: ${this.getRecommendation(record.aqi)}
+      ${this.i18n.instant('map.recommendation')}: ${this.getRecommendation(record.aqi)}
     `);
     marker.addTo(this.map);
   }
 
   private getColor(aqi: number): string {
-    if (aqi < 50) return '#2a9d8f';
-    if (aqi <= 100) return '#e9c46a';
-    if (aqi <= 150) return '#f4a261';
-    return '#e76f51';
+    if (aqi < 50) return '#1f9d55';
+    if (aqi <= 100) return '#d4a017';
+    if (aqi <= 150) return '#f97316';
+    return '#dc2626';
   }
 
   private getRecommendation(aqi: number): string {
@@ -115,5 +115,12 @@ export class MapViewComponent implements AfterViewInit {
     if (aqi <= 100) return this.i18n.instant('value.moderate');
     if (aqi <= 150) return this.i18n.instant('value.limitOutdoor');
     return this.i18n.instant('value.avoidOutdoor');
+  }
+
+  protected aqiBadgeClass(aqi: number): string {
+    if (aqi < 50) return 'pill-risk-low';
+    if (aqi <= 100) return 'pill-risk-moderate';
+    if (aqi <= 150) return 'pill-risk-high';
+    return 'pill-risk-very-high';
   }
 }

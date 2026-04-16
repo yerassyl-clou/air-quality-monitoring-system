@@ -41,7 +41,9 @@ class AirQualityAggregateView(APIView):
 
         try:
             best = get_best_data(latitude=latitude, longitude=longitude)
+            print(f"[air_quality] external source selected={best['source']} values={best}")
         except (RequestException, ValueError, TypeError, AttributeError):
+            print(f"[air_quality] using fallback city defaults for city={city}")
             best = {
                 "lat": latitude,
                 "lon": longitude,
@@ -58,8 +60,8 @@ class AirQualityAggregateView(APIView):
         )
         air_quality = AirQualityData.objects.create(
             location=location,
-            latitude=latitude,
-            longitude=longitude,
+            latitude=best["lat"],
+            longitude=best["lon"],
             aqi=best["aqi"],
             pm25=best.get("pm25"),
             pm10=best.get("pm10"),
@@ -85,27 +87,52 @@ class AirQualityLatestView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        if not AirQualityData.objects.exists():
-            self._seed_default_snapshots()
+        self._ensure_default_locations()
+        self._refresh_live_snapshots()
         queryset = AirQualityData.objects.select_related("location")[:20]
         return Response(AirQualityDataSerializer(queryset, many=True).data)
 
-    def _seed_default_snapshots(self):
+    def _ensure_default_locations(self):
         for city, config in DEFAULT_CITY_LOCATIONS.items():
-            location, _ = Location.objects.get_or_create(
+            Location.objects.get_or_create(
                 city=city,
                 name=config["name"],
                 latitude=config["latitude"],
                 longitude=config["longitude"],
             )
+
+    def _refresh_live_snapshots(self):
+        for location in Location.objects.all()[:10]:
+            city_config = DEFAULT_CITY_LOCATIONS.get(
+                location.city,
+                {
+                    "aqi": 75,
+                    "pm25": 20.0,
+                    "pm10": 30.0,
+                },
+            )
+            try:
+                best = get_best_data(float(location.latitude), float(location.longitude))
+                print(f"[air_quality] latest snapshot source selected={best['source']} city={location.city} values={best}")
+            except (RequestException, ValueError, TypeError, AttributeError):
+                print(f"[air_quality] latest snapshot fallback used for city={location.city}")
+                best = {
+                    "lat": float(location.latitude),
+                    "lon": float(location.longitude),
+                    "aqi": city_config["aqi"],
+                    "pm25": city_config["pm25"],
+                    "pm10": city_config["pm10"],
+                    "source": "air.org.kz",
+                }
+
             AirQualityData.objects.create(
                 location=location,
-                latitude=config["latitude"],
-                longitude=config["longitude"],
-                aqi=config["aqi"],
-                pm25=config["pm25"],
-                pm10=config["pm10"],
-                source="air.org.kz",
+                latitude=best["lat"],
+                longitude=best["lon"],
+                aqi=best["aqi"],
+                pm25=best.get("pm25"),
+                pm10=best.get("pm10"),
+                source=best["source"],
                 timestamp=timezone.now(),
             )
 

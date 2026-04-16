@@ -8,6 +8,7 @@ export interface LocationRecord {
 
 export interface RecommendationPayload {
   aqi: number;
+  risk: number;
   risk_level: string;
   message: string;
   sensitivity_level: string;
