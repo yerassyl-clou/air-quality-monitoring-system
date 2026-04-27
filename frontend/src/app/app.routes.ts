@@ -9,6 +9,7 @@ import { ProfileComponent } from "./modules/profile/components/profile.component
 import { ReportsComponent } from "./modules/reports/components/reports.component";
 
 export const routes: Routes = [
+  { path: "", component: LoginComponent },
   { path: "login", component: LoginComponent },
   { path: "register", component: RegisterComponent },
   {
@@ -19,6 +20,5 @@ export const routes: Routes = [
   { path: "map", component: MapViewComponent, canActivate: [authGuard] },
   { path: "reports", component: ReportsComponent, canActivate: [authGuard] },
   { path: "profile", component: ProfileComponent, canActivate: [authGuard] },
-  { path: "", pathMatch: "full", redirectTo: "dashboard" },
-  { path: "**", redirectTo: "dashboard" },
+  { path: "**", redirectTo: "" },
 ];

@@ -52,7 +52,7 @@ import { TranslationService } from '../../../shared/services/translation.service
     </section>
 
     <ng-template #emptyRecords>
-      <div class="empty-state">{{ 'map.noMarkers' | t }}</div>
+      <div class="empty-state">{{ isLoading ? ('dashboard.loading' | t) : ('map.noMarkers' | t) }}</div>
     </ng-template>
   `
 })
@@ -63,19 +63,24 @@ export class MapViewComponent implements AfterViewInit {
 
   protected records: AirQualityRecord[] = [];
   protected errorMessage = '';
+  protected isLoading = true;
 
   ngAfterViewInit(): void {
     this.map = L.map('air-quality-map').setView([43.238949, 76.889709], 5.5);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this.map);
+    setTimeout(() => this.map?.invalidateSize(), 0);
 
     this.airQualityService.getLatest().subscribe({
       next: (records) => {
         this.records = records;
         records.forEach((record) => this.addMarker(record));
+        this.isLoading = false;
+        setTimeout(() => this.map?.invalidateSize(), 50);
       },
       error: () => {
+        this.isLoading = false;
         this.errorMessage = this.i18n.instant('map.error');
       }
     });

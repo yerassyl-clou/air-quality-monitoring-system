@@ -72,6 +72,12 @@ export class LoginComponent {
     password: ['', [Validators.required]]
   });
 
+  constructor() {
+    if (this.authService.isAuthenticated()) {
+      void this.router.navigate(['/dashboard']);
+    }
+  }
+
   submit(): void {
     if (this.form.invalid || this.isSubmitting) {
       return;

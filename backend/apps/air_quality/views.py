@@ -1,4 +1,5 @@
 from requests import RequestException
+from datetime import timedelta
 from django.utils import timezone
 from rest_framework import permissions, status
 from rest_framework.response import Response
@@ -85,11 +86,16 @@ class AirQualityAggregateView(APIView):
 
 class AirQualityLatestView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    SNAPSHOT_TTL = timedelta(minutes=30)
 
     def get(self, request):
         self._ensure_default_locations()
         self._refresh_live_snapshots()
-        queryset = AirQualityData.objects.select_related("location")[:20]
+        queryset = (
+            AirQualityData.objects.select_related("location")
+            .order_by("location_id", "-timestamp")
+            .distinct("location_id")
+        )
         return Response(AirQualityDataSerializer(queryset, many=True).data)
 
     def _ensure_default_locations(self):
@@ -103,6 +109,14 @@ class AirQualityLatestView(APIView):
 
     def _refresh_live_snapshots(self):
         for location in Location.objects.all()[:10]:
+            latest_for_location = (
+                AirQualityData.objects.filter(location=location)
+                .order_by("-timestamp")
+                .first()
+            )
+            if latest_for_location and timezone.now() - latest_for_location.timestamp < self.SNAPSHOT_TTL:
+                continue
+
             city_config = DEFAULT_CITY_LOCATIONS.get(
                 location.city,
                 {

@@ -110,8 +110,9 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 OPENAQ_API_URL = os.getenv("OPENAQ_API_URL", "https://api.openaq.org/v3")
+OPENAQ_API_KEY = os.getenv("OPENAQ_API_KEY", "")
 WAQI_API_URL = os.getenv("WAQI_API_URL", "https://api.waqi.info/feed/geo:{lat};{lon}/")
-WAQI_TOKEN = os.getenv("WAQI_TOKEN", "")
+WAQI_TOKEN = os.getenv("WAQI_TOKEN") or os.getenv("WAQI_API_KEY", "")
 AIR_KZ_API_URL = os.getenv("AIR_KZ_API_URL", "https://air.org.kz/api")
 AIR_KZ_TOKEN = os.getenv("AIR_KZ_TOKEN", "")
 IQAIR_API_URL = os.getenv("IQAIR_API_URL", "https://api.airvisual.com/v2/nearest_city")

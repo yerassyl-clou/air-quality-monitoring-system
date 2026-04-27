@@ -1,6 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { forkJoin } from 'rxjs';
 
 import { AirQualityRecord, AirQualityResponse, LocationRecord } from '../../../shared/models/air-quality.models';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
@@ -106,7 +105,7 @@ import { TranslationService } from '../../../shared/services/translation.service
     </ng-template>
 
     <ng-template #noData>
-      <div class="empty-state">{{ 'dashboard.noData' | t }}</div>
+      <div class="empty-state">{{ isLatestLoading ? ('dashboard.loading' | t) : ('dashboard.noData' | t) }}</div>
     </ng-template>
   `
 })
@@ -122,6 +121,7 @@ export class DashboardComponent {
   protected latestRecords: AirQualityRecord[] = [];
   protected locations: LocationRecord[] = [];
   protected errorMessage = '';
+  protected isLatestLoading = true;
 
   constructor() {
     this.load();
@@ -129,19 +129,14 @@ export class DashboardComponent {
 
   load(): void {
     this.errorMessage = '';
+    this.isLatestLoading = true;
     this.authService.getProfile().subscribe({
       next: (profile) => {
         this.profile = profile;
-        forkJoin({
-          current: this.airQualityService.getCurrentAirQuality(undefined, undefined, profile.location),
-          latest: this.airQualityService.getLatest(),
-          locations: this.airQualityService.getLocations()
-        }).subscribe({
-          next: ({ current, latest, locations }) => {
+        this.airQualityService.getCurrentAirQuality(undefined, undefined, profile.location).subscribe({
+          next: (current) => {
             this.aqiData = current;
             this.aiText = null;
-            this.latestRecords = latest;
-            this.locations = locations;
             this.aiRecommendationService
               .getAIRecommendation(
                 current.air_quality.aqi,
@@ -162,8 +157,29 @@ export class DashboardComponent {
             this.errorMessage = this.i18n.instant('dashboard.airError');
           }
         });
+
+        this.airQualityService.getLocations().subscribe({
+          next: (locations) => {
+            this.locations = locations;
+          },
+          error: () => {
+            this.errorMessage = this.i18n.instant('dashboard.airError');
+          }
+        });
+
+        this.airQualityService.getLatest().subscribe({
+          next: (latest) => {
+            this.latestRecords = latest;
+            this.isLatestLoading = false;
+          },
+          error: () => {
+            this.isLatestLoading = false;
+            this.errorMessage = this.i18n.instant('dashboard.airError');
+          }
+        });
       },
       error: () => {
+        this.isLatestLoading = false;
         this.errorMessage = this.i18n.instant('dashboard.profileError');
       }
     });

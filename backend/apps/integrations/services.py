@@ -1,5 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
-from statistics import mean
 
 import requests
 from django.conf import settings
@@ -10,6 +10,10 @@ OPEN_METEO_API_URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
 logger = logging.getLogger(__name__)
 
 
+def _is_configured(value: str | None) -> bool:
+    return bool(value and value.strip() and value.strip().lower() not in {"change-me", "your-key", "your-token"})
+
+
 def _debug_response(source: str, response: requests.Response) -> None:
     print(f"[air_quality] {source} status={response.status_code}")
     print(f"[air_quality] {source} body={response.text[:600]}")
@@ -17,13 +21,16 @@ def _debug_response(source: str, response: requests.Response) -> None:
 
 def _debug_failure(source: str, error: Exception) -> None:
     print(f"[air_quality] {source} failed: {error}")
-    logger.exception("%s integration failed", source)
+    logger.warning("%s integration failed: %s", source, error)
 
 
 def fetch_from_openaq(latitude: float, longitude: float) -> dict:
+    if not _is_configured(settings.OPENAQ_API_KEY):
+        raise ValueError("OpenAQ API key is not configured")
     response = requests.get(
         f"{settings.OPENAQ_API_URL}/locations",
         params={"coordinates": f"{latitude},{longitude}", "radius": 5000, "limit": 1},
+        headers={"X-API-Key": settings.OPENAQ_API_KEY},
         timeout=REQUEST_TIMEOUT,
     )
     _debug_response("OpenAQ", response)
@@ -46,7 +53,7 @@ def fetch_from_openaq(latitude: float, longitude: float) -> dict:
 
 
 def fetch_from_waqi(latitude: float, longitude: float) -> dict:
-    if not settings.WAQI_TOKEN:
+    if not _is_configured(settings.WAQI_TOKEN):
         raise ValueError("WAQI token is not configured")
     response = requests.get(
         settings.WAQI_API_URL.format(lat=latitude, lon=longitude),
@@ -73,6 +80,8 @@ def fetch_from_waqi(latitude: float, longitude: float) -> dict:
 
 
 def fetch_from_air_kz(latitude: float, longitude: float) -> dict:
+    if not _is_configured(settings.AIR_KZ_TOKEN):
+        raise ValueError("air.org.kz token is not configured")
     response = requests.get(
         f"{settings.AIR_KZ_API_URL}/measurements/nearest/",
         params={"lat": latitude, "lon": longitude},
@@ -95,7 +104,7 @@ def fetch_from_air_kz(latitude: float, longitude: float) -> dict:
 
 
 def fetch_from_iqair(latitude: float, longitude: float) -> dict:
-    if not settings.IQAIR_API_KEY:
+    if not _is_configured(settings.IQAIR_API_KEY):
         raise ValueError("IQAir API key is not configured")
     response = requests.get(
         settings.IQAIR_API_URL,
@@ -165,11 +174,12 @@ def merge_sources(*sources: dict) -> dict:
     valid_sources = [source for source in sources if source and source.get("aqi") is not None]
     if not valid_sources:
         raise ValueError("No source data available")
-    best = min(valid_sources, key=lambda item: source_priority(item["source"]))
+    valid_sources.sort(key=lambda item: source_priority(item["source"]))
+    best = valid_sources[0]
     merged = {
         "lat": best["lat"],
         "lon": best["lon"],
-        "aqi": round(mean([item["aqi"] for item in valid_sources])),
+        "aqi": best["aqi"],
         "pm25": first_non_null(valid_sources, "pm25"),
         "pm10": first_non_null(valid_sources, "pm10"),
         "source": best["source"],
@@ -179,14 +189,27 @@ def merge_sources(*sources: dict) -> dict:
 
 def get_best_data(latitude: float, longitude: float) -> dict:
     collected = []
-    for fetcher in (fetch_from_air_kz, fetch_from_waqi, fetch_from_openaq, fetch_from_iqair, fetch_from_open_meteo):
-        try:
-            result = fetcher(latitude, longitude)
-            print(f"[air_quality] {fetcher.__name__} normalized={result}")
-            collected.append(result)
-        except (requests.RequestException, KeyError, ValueError, TypeError, AttributeError) as error:
-            _debug_failure(fetcher.__name__, error)
-            continue
+    fetchers = (
+        fetch_from_open_meteo,
+        fetch_from_waqi,
+        fetch_from_openaq,
+        fetch_from_iqair,
+        fetch_from_air_kz,
+    )
+    with ThreadPoolExecutor(max_workers=len(fetchers)) as executor:
+        future_map = {
+            executor.submit(fetcher, latitude, longitude): fetcher.__name__
+            for fetcher in fetchers
+        }
+        for future in as_completed(future_map):
+            fetcher_name = future_map[future]
+            try:
+                result = future.result()
+                print(f"[air_quality] {fetcher_name} normalized={result}")
+                collected.append(result)
+            except (requests.RequestException, KeyError, ValueError, TypeError, AttributeError) as error:
+                _debug_failure(fetcher_name, error)
+                continue
     return merge_sources(*collected)
 
 
@@ -203,7 +226,7 @@ def calculate_aqi_from_pm25(pm25: float | None) -> int:
 
 
 def source_priority(source: str) -> int:
-    priority = {"air.org.kz": 0, "WAQI": 1, "OpenAQ": 2, "IQAir": 3, "Open-Meteo": 4}
+    priority = {"air.org.kz": 0, "IQAir": 1, "Open-Meteo": 2, "WAQI": 3, "OpenAQ": 4}
     return priority.get(source, 99)
 
 
